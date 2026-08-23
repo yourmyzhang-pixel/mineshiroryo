@@ -9,7 +9,7 @@ import {
 
 /* ---------- Supabase Setup ---------- */
 const supabaseUrl = 'https://jorcrybqarhzsnbvuxni.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvcmNyeWJxYXJoenNuYnZ1eG5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0OTA1NjQsImV4cCI6MjEwMzA2NjU2NH0.V6XV19uXUxsmSq-OpFNa4ya33lj31CKTQ4JPkTp5cBY';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvcmNyeWJxYXJoenNuYnZ1eG5pIiqm9sZSI6ImFub24iLCJpYXQiOjE3ODc0OTA1NjQsImV4cCI6MjEwMzA2NjU2NH0.V6XV19uXUxsmSq-OpFNa4ya33lj31CKTQ4JPkTp5cBY';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 /* ---------- fonts + tiny global styles ---------- */
@@ -48,10 +48,6 @@ const DEFAULT_CONTENT = {
   theme: { accent: "#FF6F91" },
 };
 const ACCENT_PRESETS = ["#FF6F91", "#F59E0B", "#22C55E", "#3B82F6", "#8B5CF6", "#EF4444", "#14B8A6", "#1A1A1A"];
-const LINK_TYPES = [
-  { key: "facebook", label: "Facebook", icon: Facebook }, { key: "twitter", label: "X", icon: Twitter },
-  { key: "website", label: "Website", icon: Globe }, { key: "other", label: "Other", icon: Link2 },
-];
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const tagLabel = (t) => `#${t}`;
 const TAG_EMOJIS = ["🏷️", "🌊", "🌸", "🍜", "🎉", "📸", "☕", "🎵", "💡", "❤️", "🌙", "🐾", "✈️", "🎨"];
@@ -98,14 +94,6 @@ const Chip = ({ active, onClick, children, accent = "#262626" }) => (
     className={`px-3 py-1.5 rounded-full text-sm font-body border transition-colors ${active ? "text-white" : "bg-white/70 c-text-1A1A1A c-border-E0E0E0 hoverc-bg-F2F2F2"}`}>{children}</button>
 );
 const FieldLabel = ({ children }) => <label className="block text-xs font-body c-text-6B6B6B mb-1">{children}</label>;
-const EmojiPicker = ({ value, onChange }) => (
-  <div className="flex gap-1 overflow-x-auto pb-1 mb-1.5 scrollbar-thin">
-    {TAG_EMOJIS.map((e) => (
-      <button key={e} type="button" onClick={() => onChange(e)} title={e}
-        className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm border transition-colors ${value === e ? "c-border-1A1A1A c-bg-F2F2F2" : "border-transparent hoverc-bg-F2F2F2"}`}>{e}</button>
-    ))}
-  </div>
-);
 
 function ThemeColorPicker({ accent, onChange, onClose }) {
   return (
@@ -211,7 +199,7 @@ export default function App() {
   useEffect(() => {
     (async () => {
       try {
-        const { data, error } = await supabase.storage.from('images').download('site_content.json');
+        const { data } = await supabase.storage.from('images').download('site_content.json');
         if (data) {
           const text = await data.text();
           const parsed = JSON.parse(text);
@@ -224,7 +212,6 @@ export default function App() {
             posts: (parsed.posts || []).map((p) => ({ ...p, images: p.images?.length ? p.images : (p.image ? [p.image] : []) })),
           });
         }
-        
         if (localStorage.getItem("personal:is-owner") === "true") setIsOwner(true);
         const savedLikes = localStorage.getItem("personal:liked-posts");
         if (savedLikes) setLikedPosts(JSON.parse(savedLikes));
@@ -340,7 +327,7 @@ export default function App() {
   );
 }
 
-function HomePage({ content, saveContent, editMode, goFeed, goAlbum }) {
+function HomePage({ content, saveContent, editMode, goFeed }) {
   const { profile } = content; const accent = content.theme?.accent || "#FF6F91";
   const fileRef = useRef(null); const [draft, setDraft] = useState(profile);
   useEffect(() => setDraft(profile), [profile]);
@@ -365,20 +352,6 @@ function HomePage({ content, saveContent, editMode, goFeed, goAlbum }) {
         </div>
         {editMode && <div className="absolute top-4 right-4 z-20"><button onClick={() => fileRef.current?.click()} className="flex items-center gap-1.5 bg-white/90 px-3 py-2 rounded-full text-xs shadow"><ImageIcon size={14} /> Change cover photo</button><input ref={fileRef} type="file" accept="image/*" onChange={upload} className="hidden" /></div>}
       </div>
-      <div className="dashed-divider max-w-5xl mx-auto" />
-      {content.posts.length > 0 && (
-        <div className="max-w-5xl mx-auto px-4 py-10">
-          <div className="flex items-center justify-between mb-4"><h2 className="font-display font-semibold text-lg sm:text-xl">Scrollable Feed</h2><button onClick={goFeed} className="text-xs sm:text-sm font-body c-text-6B6B6B flex items-center gap-1">View all posts <ChevronRight size={14} /></button></div>
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin snap-x">
-            {content.posts.slice(0, 10).map((post) => (
-              <button key={post.id} onClick={goFeed} className="text-left flex-shrink-0 w-40 sm:w-48 snap-start group">
-                <div className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-2xl overflow-hidden c-bg-F2F2F2"><img src={post.images[0]} className={`w-full h-full object-cover transition-transform ${post.nsfw ? "blur-xl scale-110" : "group-hover:scale-105"}`} />{post.nsfw && <span className="absolute top-1.5 left-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">🔞 NSFW</span>}</div>
-                <p className="text-xs c-text-4B4B4B mt-1.5 line-clamp-2">{post.caption || "No caption"}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -421,9 +394,6 @@ function FeedPage({ content, saveContent, editMode, isOwner, likedPosts, toggleL
         <div className="bg-white/70 rounded-2xl p-4 border c-border-EBEBEB">
           <button onClick={toggleShowNSFW} className="w-full flex items-center justify-between gap-2"><span className="text-sm font-body c-text-1A1A1A">🔞 Show NSFW content</span><span className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${showNSFW ? "" : "c-bg-F2F2F2"}`} style={showNSFW ? { backgroundColor: accent } : undefined}><span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${showNSFW ? "left-4" : "left-0.5"}`} /></span></button>
         </div>
-        <div className="bg-white/70 rounded-2xl p-4 border c-border-EBEBEB"><h3 className="font-display font-semibold text-sm mb-3 flex items-center gap-1.5"><Tag size={14} /> All Tags</h3>
-          <div className="flex flex-wrap gap-1.5">{allTags.map((t) => (<Chip key={t} active={tagFilter === t} accent={accent} onClick={() => setTagFilter(tagFilter === t ? null : t)}>{tagLabel(t)}</Chip>))}</div>
-        </div>
       </div>
       {openPost && <PostModal post={content.posts.find(p=>p.id===openPost.id)||openPost} onClose={() => setOpenPost(null)} liked={likedPosts.includes(openPost.id)} onLike={() => toggleLike(openPost.id)} onComment={(name, text) => addComment(openPost.id, name, text)} isOwner={isOwner} onDelete={() => setConfirmDeleteId(openPost.id)} accent={accent} />}
       {showAdd && <AddPostModal content={content} saveContent={saveContent} onClose={() => setShowAdd(false)} onDone={() => flashToast("Post added ✿")} />}
@@ -433,13 +403,13 @@ function FeedPage({ content, saveContent, editMode, isOwner, likedPosts, toggleL
 }
 
 function PostModal({ post, onClose, liked, onLike, onComment, isOwner, onDelete, accent }) {
-  const [name, setName] = useState(""); const [text, setText] = useState(""); const [imgIndex, setImgIndex] = useState(0);
+  const [name, setName] = useState(""); const [text, setText] = useState("");
   const images = post.images && post.images.length ? post.images : [post.image];
   return (
     <div className="fixed inset-0 z-50 backdrop-blur-sm flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
       <div className="c-bg-FFFFFF rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-hidden grid grid-cols-1 md:grid-cols-2 relative shadow-2xl">
         <button onClick={onClose} className="absolute top-3 right-3 z-10 bg-white/90 p-1.5 rounded-full"><X size={16} /></button>
-        <div className="bg-black flex items-center justify-center relative"><img src={images[imgIndex]} className="max-h-[45vh] md:max-h-[90vh] w-full object-cover" /></div>
+        <div className="bg-black flex items-center justify-center relative"><img src={images[0]} className="max-h-[45vh] md:max-h-[90vh] w-full object-cover" /></div>
         <div className="p-5 flex flex-col overflow-y-auto scrollbar-thin">
           <p className="font-body text-sm mb-2">{post.caption}</p>
           <div className="flex items-center gap-3 mb-4"><button onClick={onLike} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border transition-colors ${liked ? "bg-rose-50 border-rose-300 text-rose-600" : "c-border-E0E0E0 c-text-6B6B6B"}`}><Heart size={14} fill={liked ? "currentColor" : "none"} /> {post.likes}</button>{isOwner && <button onClick={onDelete} className="ml-auto text-rose-500 flex items-center gap-1 text-xs"><Trash2 size={13} /></button>}</div>
@@ -458,8 +428,7 @@ function PostModal({ post, onClose, liked, onLike, onComment, isOwner, onDelete,
 
 function AddPostModal({ content, saveContent, onClose, onDone }) {
   const accent = content.theme?.accent || "#FF6F91";
-  const [images, setImages] = useState([]); const [caption, setCaption] = useState(""); const [tags, setTags] = useState([]);
-  const [tagInput, setTagInput] = useState(""); const [tagEmoji, setTagEmoji] = useState(TAG_EMOJIS[0]);
+  const [images, setImages] = useState([]); const [caption, setCaption] = useState("");
   const [busy, setBusy] = useState(false); const [nsfw, setNsfw] = useState(false);
 
   const handleFiles = async (e) => {
@@ -474,7 +443,7 @@ function AddPostModal({ content, saveContent, onClose, onDone }) {
 
   const submit = async () => {
     if (images.length === 0) return;
-    const newPost = { id: uid(), images, caption, tags, likes: 0, comments: [], nsfw };
+    const newPost = { id: uid(), images, caption, tags: [], likes: 0, comments: [], nsfw };
     await saveContent({ ...content, posts: [newPost, ...content.posts] });
     onDone(); onClose();
   };
@@ -511,62 +480,22 @@ function AlbumPage({ content, saveContent, editMode, showNSFW }) {
   const accent = content.theme?.accent || "#FF6F91";
   const [showAddAlbum, setShowAddAlbum] = useState(false);
   const visibleAlbums = showNSFW ? content.albums : content.albums.filter((a) => !a.nsfw);
-
-  const addImages = async (albumId, files) => {
-    const uploadedUrls = await Promise.all(Array.from(files).map((f) => uploadToSupabase(f, 1400)));
-    const newImgs = uploadedUrls.map((src) => ({ id: uid(), src }));
-    const albums = content.albums.map((a) => a.id === albumId ? { ...a, images: [...a.images, ...newImgs] } : a );
-    await saveContent({ ...content, albums });
-  };
-
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6 gap-3">
         <h2 className="font-display font-semibold text-2xl">Photo Albums</h2>
         {editMode && <button onClick={() => setShowAddAlbum(true)} style={{ backgroundColor: accent }} className="flex items-center gap-1.5 text-white px-3.5 py-2 rounded-full text-sm hover:opacity-90"><Plus size={15} /> New Album</button>}
       </div>
-      <div className="space-y-9">
-        {visibleAlbums.map((album) => (
-          <div key={album.id}>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-display font-medium text-lg flex items-center gap-1.5">{album.name} {album.nsfw && <span className="text-[10px] border c-border-D0D0D0 px-1.5 py-0.5 rounded-full">🔞 NSFW</span>}</h3>
-              {editMode && (
-                <div className="flex items-center gap-2">
-                  <label className="flex items-center gap-1 text-xs bg-white border c-border-E0E0E0 px-2.5 py-1.5 rounded-full cursor-pointer hoverc-bg-F2F2F2"><Plus size={12} /> Add Photos<input type="file" accept="image/*" multiple className="hidden" onChange={(e) => e.target.files?.length && addImages(album.id, e.target.files)} /></label>
-                  <button onClick={() => saveContent({ ...content, albums: content.albums.filter((a) => a.id !== album.id) })} className="text-rose-500"><Trash2 size={14} /></button>
-                </div>
-              )}
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin snap-x">
-              {album.images.map((img) => (<div key={img.id} className="relative flex-shrink-0 snap-start group"><img src={img.src} className="h-40 w-40 object-cover rounded-2xl" />{editMode && <button onClick={() => saveContent({ ...content, albums: content.albums.map((a) => a.id === album.id ? { ...a, images: a.images.filter((im) => im.id !== img.id) } : a) })} className="absolute top-1.5 right-1.5 bg-white/90 p-1.5 rounded-full text-rose-600 opacity-0 group-hover:opacity-100"><Trash2 size={12} /></button>}</div>))}
-            </div>
-          </div>
-        ))}
-      </div>
-      {showAddAlbum && <AddAlbumModal accent={accent} onClose={() => setShowAddAlbum(false)} onSubmit={(name, nsfw) => { saveContent({ ...content, albums: [...content.albums, { id: uid(), name, images: [], nsfw }] }); setShowAddAlbum(false); }} />}
     </div>
   );
 }
 
-function ContactPage({ content, saveContent, editMode }) {
-  const accent = content.theme?.accent || "#FF6F91";
-  const [draft, setDraft] = useState(content.contact); const fileRef = useRef(null);
-  const commit = async (updated) => { await saveContent({ ...content, contact: updated ?? draft }); };
-  const uploadAvatar = async (e) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    const url = await uploadToSupabase(file, 600);
-    const updated = { ...content.contact, avatar: url }; setDraft(updated); await commit(updated);
-  };
-
+function ContactPage({ content }) {
   return (
     <div className="max-w-lg mx-auto px-4 py-14">
-      <div className="bg-white rounded-[2rem] shadow-lg border c-border-EBEBEB p-8 relative overflow-hidden text-center sm:text-left">
-        <div className="relative inline-block mx-auto sm:mx-0 mb-4">
-          <div className="w-24 h-24 overflow-hidden rounded-2xl c-bg-F2F2F2">{draft.avatar ? <img src={draft.avatar} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center c-text-B0B0B0 text-3xl font-display">?</div>}</div>
-          {editMode && <><button onClick={() => fileRef.current?.click()} style={{ backgroundColor: accent }} className="absolute -bottom-1 -right-1 text-white p-1.5 rounded-full shadow hover:opacity-90"><Pencil size={11} /></button><input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={uploadAvatar} /></>}
-        </div>
-        {editMode ? <input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} onBlur={() => commit()} className="font-display font-semibold text-xl w-full mb-1 c-bg-FFFFFF rounded-lg" /> : <h2 className="font-display font-semibold text-xl mb-1">{draft.name}</h2>}
-        {editMode ? <textarea value={draft.bio} onChange={(e) => setDraft({ ...draft, bio: e.target.value })} onBlur={() => commit()} rows={2} className="text-sm w-full mb-5 c-bg-FFFFFF rounded-lg px-2 py-1" /> : <p className="text-sm mb-5 c-text-4B4B4B">{draft.bio}</p>}
+      <div className="bg-white rounded-[2rem] shadow-lg border c-border-EBEBEB p-8 text-center sm:text-left">
+        <h2 className="font-display font-semibold text-xl mb-1">{content.contact.name}</h2>
+        <p className="text-sm mb-5 c-text-4B4B4B">{content.contact.bio}</p>
       </div>
     </div>
   );
